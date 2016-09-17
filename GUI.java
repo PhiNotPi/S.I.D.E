@@ -1,3 +1,4 @@
+
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -6,6 +7,7 @@
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
@@ -21,14 +23,14 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 /**
- * 
  * @author Rohans, PhiNotPi
  */
 public class GUI {
-
+  static final Font monospaced = new Font(Font.MONOSPACED, Font.PLAIN, 15);
   static List<List<Character>> progLines = new ArrayList<List<Character>>();
   static int curLineNum = 0;
   static int curColNum = 0;
+  static int histColNum = 0;
   static {
     progLines.add(new ArrayList<Character>());
   }
@@ -39,6 +41,7 @@ public class GUI {
 
   static String program() {
     String res = "";
+    // res += curLineNum + " " + curColNum + " " + histColNum + "\n";
     for (int l = 0; l < progLines.size(); l++) {
       if (l > 0) {
         res += "\n";
@@ -83,6 +86,7 @@ public class GUI {
       curLine().add(curColNum, '?');
       curColNum++;
     }
+    histColNum = curColNum;
   }
 
   static void cursorLeft() {
@@ -92,14 +96,38 @@ public class GUI {
     } else if (curColNum > 0) {
       curColNum--;
     }
+    histColNum = curColNum;
   }
 
   static void cursorRight() {
-    if (curColNum == curLine().size() && curLineNum != progLines.size()) {
+    if (curColNum == curLine().size() && curLineNum < progLines.size() - 1) {
       curLineNum++;
       curColNum = 0;
     } else if (curColNum < curLine().size()) {
       curColNum++;
+    }
+    histColNum = curColNum;
+  }
+
+  static void cursorUp() {
+    if (curLineNum > 0) {
+      curLineNum--;
+      if (histColNum > curLine().size()) {
+        curColNum = curLine().size();
+      } else {
+        curColNum = histColNum;
+      }
+    }
+  }
+
+  static void cursorDown() {
+    if (curLineNum < progLines.size() - 1) {
+      curLineNum++;
+      if (histColNum > curLine().size()) {
+        curColNum = curLine().size();
+      } else {
+        curColNum = histColNum;
+      }
     }
   }
 
@@ -141,8 +169,14 @@ public class GUI {
           case 37: // left arrow
             cursorLeft();
             break;
-          case 39: // left arrow
+          case 38: // up arrow
+            cursorUp();
+            break;
+          case 39: // right arrow
             cursorRight();
+            break;
+          case 40: // down arrow
+            cursorDown();
             break;
           }
 
@@ -177,11 +211,15 @@ public class GUI {
 
     @Override
     public void paintComponent(Graphics g) {
+      g.setFont(monospaced);
       g.setColor(Color.WHITE);
       String[] lines = program().split("\n");
       for (int i = 0; i < lines.length; i++) {
         prettyPrint(lines[i], i, g);
       }
+      g.setColor(Color.magenta);
+      g.drawLine(curColNum * 9, curLineNum * 15, curColNum * 9,
+          curLineNum * 15 + 15);
     }
 
     /**
@@ -201,13 +239,12 @@ public class GUI {
     }
 
     private void prettyPrint(String line, int i, Graphics g) {
-      g.drawString(line, 0, i * 15 + 10);
+      g.drawString(line, 0, i * 15 + 15);
     }
   }
 
   public static void runGUI() {
     Silos.safeModeEnabled = false;
     Frame mainFrame = new Frame();
-
   }
 }
